@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+tests
+storage/*.key
+storage/logs/*.log
+*.md
+*.mp4
+*.zip
+phpunit.xml
