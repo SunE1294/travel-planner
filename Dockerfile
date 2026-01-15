@@ -24,10 +24,10 @@ COPY . /var/www/html
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-# FIX: Added --no-scripts to prevent build errors
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Set permissions for Laravel
+# Create missing folders and set permissions (FIXED HERE)
+RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN touch /var/www/html/database/database.sqlite && chown www-data:www-data /var/www/html/database/database.sqlite
 
