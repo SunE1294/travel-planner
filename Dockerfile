@@ -26,10 +26,13 @@ COPY . /var/www/html
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Create missing folders and set permissions (FIXED HERE)
+# Create missing folders and set permissions
 RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN touch /var/www/html/database/database.sqlite && chown www-data:www-data /var/www/html/database/database.sqlite
 
 # Expose Port 80
 EXPOSE 80
+
+# AUTO-FIX COMMAND (Runs every time site starts)
+CMD bash -c "php artisan package:discover --ansi && php artisan migrate --force && php artisan optimize:clear && apache2-foreground"
