@@ -7,4 +7,5 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
 Route::post('/api/generate-plan', [TravelController::class, 'getPlan']);
