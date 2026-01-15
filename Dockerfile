@@ -2,37 +2,37 @@ FROM php:8.2-apache
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
+    libzip-dev zip unzip git \
     && docker-php-ext-install pdo_mysql zip
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Set document root for Laravel
+# Set document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Set working directory
 WORKDIR /var/www/html
-
-# Copy application files
 COPY . /var/www/html
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Create missing folders and set permissions
+# Create .env file for build process
+RUN cp .env.example .env || true
+
+# Fix permissions & Create folders
 RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html
+
+# Run heavy commands during BUILD (Not at startup)
+RUN php artisan package:discover --ansi
+RUN php artisan optimize:clear
+
+# Final permission fix
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN touch /var/www/html/database/database.sqlite && chown www-data:www-data /var/www/html/database/database.sqlite
 
-# Expose Port 80
 EXPOSE 80
-
-# AUTO-FIX COMMAND (Runs every time site starts)
-CMD bash -c "php artisan package:discover --ansi && php artisan migrate --force && php artisan optimize:clear && apache2-foreground"
+CMD ["apache2-foreground"]
