@@ -7,8 +7,12 @@ use Illuminate\Support\Facades\Http;
 
 class TravelController extends Controller
 {
+    /**
+     * Generate a travel plan using Google Gemini AI.
+     */
     public function getPlan(Request $request)
     {
+        // 1. Validation
         $request->validate([
             'location' => 'required|string',
             'month'    => 'required|string',
@@ -16,39 +20,50 @@ class TravelController extends Controller
             'days'     => 'required|numeric',
         ]);
 
-        $prompt = "তুমি একজন ট্রাভেল গাইড। {$request->month} মাসে {$request->days} দিনের জন্য {$request->location} ভ্রমণের প্ল্যান দাও। বাজেট {$request->budget} টাকা। উত্তর বাংলায় এবং HTML format এ দাও (div, h3, ul, li ট্যাগ ব্যবহার করে)।";
+        // 2. Construct the English Prompt
+        $prompt = "You are a professional travel guide. Create a travel itinerary for {$request->location} in the month of {$request->month} for {$request->days} days. The total budget is {$request->budget}. Provide the response in English and in HTML format using only <div>, <h3>, <ul>, and <li> tags.";
 
         $apiKey = env('GEMINI_API_KEY');
 
-        // পরিবর্তন: আপনার লিস্টে থাকা 'gemini-flash-latest' ব্যবহার করা হলো।
-        // এটি অটোমেটিক লেটেস্ট স্টেবল ভার্সন (যেমন 2.5 বা 1.5) সিলেক্ট করবে যা আপনার কি-তে সাপোর্ট করে।
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
+        // 3. API URL (Using v1beta for gemini-1.5-flash)
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
 
         try {
+            // 4. API Request
             $response = Http::withoutVerifying()
                 ->withHeaders(['Content-Type' => 'application/json'])
                 ->post($url, [
                     'contents' => [
-                        ['parts' => [['text' => $prompt]]]
+                        [
+                            'parts' => [
+                                ['text' => $prompt]
+                            ]
+                        ]
                     ]
                 ]);
 
+            // 5. Handling the Response
             if ($response->successful()) {
                 $data = $response->json();
                 
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                     $aiText = $data['candidates'][0]['content']['parts'][0]['text'];
+                    
+                    // Remove Markdown code blocks if the AI includes them
                     $cleanText = str_replace(['```html', '```'], '', $aiText);
-                    return response()->json(['plan' => $cleanText]);
+                    
+                    return response()->json(['plan' => trim($cleanText)]);
                 }
             }
 
+            // Error from Google API
             return response()->json([
-                'plan' => 'Google Error: ' . $response->status() . ' - ' . $response->body()
+                'plan' => 'Google API Error: ' . $response->status() . ' - ' . $response->reason()
             ], 500);
 
         } catch (\Exception $e) {
-            return response()->json(['plan' => 'Server Error: ' . $e->getMessage()], 500);
+            // General Server/Connection Error
+            return response()->json(['plan' => 'Internal Server Error: ' . $e->getMessage()], 500);
         }
     }
 }
