@@ -12,7 +12,7 @@
         .glass-effect { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
         .loader { border-top-color: #FACC15; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* এআই রেসপন্স সুন্দর দেখানোর জন্য কিছু CSS */
+        /* CSS to make AI Response content look beautiful */
         #aiResponse h3 { font-size: 1.5rem; font-weight: bold; color: #1e40af; margin-top: 1rem; }
         #aiResponse ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
         #aiResponse p { margin-bottom: 0.5rem; line-height: 1.6; }
@@ -104,7 +104,7 @@
                     headers: { 
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        // লারাভেলের জন্য এই হেডারটি দেওয়া ভালো
+                        // Recommended header for Laravel AJAX requestsো
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify(data)
@@ -115,10 +115,10 @@
                 if (response.ok) {
                     aiResponse.innerHTML = result.plan; 
                     resultArea.classList.remove('hidden');
-                    // স্ক্রল করে রেজাল্টে নিয়ে যাবে
+                    // Smooth scroll to resultsে
                     resultArea.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    // সার্ভার থেকে আসা নির্দিষ্ট এরর মেসেজ দেখাবে
+                    // Display specific error message from serverে
                     throw new Error(result.plan || "সার্ভার থেকে সঠিক উত্তর পাওয়া যায়নি।");
                 }
                 
